@@ -18,12 +18,13 @@ package aaes_pack is
 	--1 état = 16 éléments = 128 bits
 	subtype STATE is std_logic_vector(127 downto 0);
 	
-	--état des machines à états
+	--états des machines à états
 	type state_type is (inactif, actif, attente);
 	
+	
 	-- table de substitution
-	type s_box_arr is array (0 to 255) of ELEMENT;
-	constant mem : s_box_arr :=
+	type array_type is array (0 to 255) of ELEMENT;
+	constant Sbox : array_type :=
 	(
 	x"63", x"7c", x"77", x"7b", x"f2", x"6b", x"6f", x"c5", x"30", x"01", x"67", x"2b", x"fe", x"d7", x"ab", x"76", 
 	x"ca", x"82", x"c9", x"7d", x"fa", x"59", x"47", x"f0", x"ad", x"d4", x"a2", x"af", x"9c", x"a4", x"72", x"c0", 
@@ -47,7 +48,7 @@ package aaes_pack is
 	
 	-- table Rcon
 	-- Rcon(i) = x^(i-1) mod x^8+x^4+x^3+x+1
-	constant Rcon : s_box_arr :=
+	constant Rcon : array_type :=
 	(
 	x"8d", x"01", x"02", x"04", x"08", x"10", x"20", x"40", x"80", x"1b", x"36", x"6c", x"d8", x"ab", x"4d", x"9a", 
 	x"2f", x"5e", x"bc", x"63", x"c6", x"97", x"35", x"6a", x"d4", x"b3", x"7d", x"fa", x"ef", x"c5", x"91", x"39", 
@@ -97,7 +98,7 @@ package body aaes_pack is
 		begin
 		
 		temp := to_integer(unsigned(a));
-		result := mem(temp);
+		result := Sbox(temp);
 		
 		return result;
 		

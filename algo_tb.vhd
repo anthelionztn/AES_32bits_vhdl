@@ -17,7 +17,7 @@ end entity;
 architecture archi of algo_tb is
 
 signal HORL : std_logic := '0';
-signal CLR : std_logic := '0';
+signal CLR : std_logic := '1';
 	
 signal KEY_IN_4_4 : COLUMN := (others => '0'); --3C_4F_CF_09
 signal KEY_IN_3_4 : COLUMN := (others => '0'); --88_15_F7_AB
@@ -96,19 +96,25 @@ U0 : algo port map
 
 HORL <= not HORL after 10 ns; --50 MHz
 
-KEY_IN_4_4 <= x"3C_4F_CF_09" after 25 ns;
-KEY_IN_3_4 <= x"88_15_F7_AB" after 25 ns;
-KEY_IN_2_4 <= x"A6_D2_AE_28" after 25 ns;
-KEY_IN_1_4 <= x"16_15_7E_2B" after 25 ns;
-KEY_IN_OK <= '1' after 25 ns, '0' after 52 ns, '1' after 1475 ns, '0' after 1498 ns;
+KEY_IN_4_4 <= x"3c4fcf09" after 25 ns, x"3C_4F_CF_09" after 2812 ns;
+KEY_IN_3_4 <= x"8815f7ab" after 25 ns, x"88_15_F7_AB" after 2812 ns;
+KEY_IN_2_4 <= x"a6d2ae28" after 25 ns, x"A6_D2_AE_28" after 2812 ns;
+KEY_IN_1_4 <= x"16157e2b" after 25 ns, x"16_15_7E_2B" after 2812 ns;
 
-DATA_IN_4_4 <= x"34_07_37_E0" after 33 ns;
-DATA_IN_3_4 <= x"A2_98_31_31" after 33 ns;
-DATA_IN_2_4	<= x"8D_30_5A_88" after 33 ns;
-DATA_IN_1_4 <= x"A8_F6_43_32" after 33 ns;
-DATA_IN_OK <= '1' after 33 ns, '0' after 68 ns, '1' after 1498 ns, '0' after 1525 ns;
-DATA_OUT_ACK <= '1' after 1377 ns, '0' after 1393 ns;
+--KEY_IN_OK <= '1' after 25 ns, '0' after 52 ns, '1' after 1600 ns, '0' after 1621 ns;
+KEY_IN_OK <= '1' after 75 ns, '0' after 2812 ns;--'1' after 2854 ns, '0' after 2961 ns;
 
-CLR <= '1' after 1425 ns, '0' after 1468 ns;
+DATA_IN_4_4 <= x"25199e7f" after 33 ns, x"34_07_37_E0" after 2812 ns;
+DATA_IN_3_4 <= x"1a7434e1" after 33 ns, x"A2_98_31_31" after 2812 ns;
+DATA_IN_2_4	<= x"9199452a" after 33 ns, x"8D_30_5A_88" after 2812 ns;
+DATA_IN_1_4 <= x"e1bcc06b" after 33 ns, x"A8_F6_43_32" after 2812 ns;
+
+--DATA_IN_OK <= '1' after 33 ns, '0' after 68 ns, '1' after 1600 ns, '0' after 1608 ns;
+DATA_IN_OK <= '1' after 100 ns, '0' after 2837 ns, '1' after 2901 ns, '0' after 2961 ns;
+
+DATA_OUT_ACK <= '1' after 2000 ns, '0' after 2750 ns, '1' after 4500 ns, '0' after 4635 ns;
+
+--CLR <= '0' after 15 ns, '1' after 1425 ns, '0' after 1468 ns;
+CLR <= '0' after 15 ns;
 
 end archi;

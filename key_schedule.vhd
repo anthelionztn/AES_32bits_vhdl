@@ -17,14 +17,14 @@ port (
 	
 	round_in : in std_logic_vector(3 downto 0); --entrée du numéro de tour
 	
-	Key_in : in STATE; --clé en entrée, d'un concatenateur
-	Key_in_ok  : in std_logic; --indicateur de validité de la clé
+	key_in : in STATE; --clé en entrée, d'un concatenateur
+	key_in_ok  : in std_logic; --indicateur de validité de la clé
 
-	Key_out : out STATE; --données de sortie, vers add_round_key
-	Key_out_ok : out std_logic; --indicateur de validité de la sortie
+	key_out : out STATE; --données de sortie, vers add_round_key
+	key_out_ok : out std_logic; --indicateur de validité de la sortie
 	
-	ack_Key_in : out std_logic; --vers l'amont : entrée prise en compte
-	ack_Key_out : in std_logic; --de l'aval : sortie prise en compte
+	ack_key_in : out std_logic; --vers l'amont : entrée prise en compte
+	ack_key_out : in std_logic; --de l'aval : sortie prise en compte
 	
 	etat : out std_logic_vector (1 downto 0) --indicateur de l'état courant (pour debug)
 );
@@ -35,14 +35,30 @@ architecture archi of key_schedule is
 
 signal etat_courant : state_type := inactif;
 signal etat_prochain : state_type := actif;
-signal round_in_t : integer range 0 to 11 := 0; --numéro du tours courant
+signal round_in_t : integer range 0 to 12 := 0; --numéro du tours courant
+signal key_in_ok_t : std_logic := '0';
 
 begin
 
 	round_in_t <= to_integer(unsigned(round_in));
+
+	
+process(key_in_ok, clr, round_in_t) is
+
+	begin
+		
+		if(clr = '1') then
+			key_in_ok_t <= '0';
+		elsif rising_edge(key_in_ok) then
+			key_in_ok_t <= '1';			
+		elsif (round_in_t = 11) then
+			key_in_ok_t <= '0';
+		end if;
+		
+end process;	
 	
 --process combinatoire asynchrone
-machine_d_etat : process(etat_prochain, Key_in_ok, ack_Key_out, round_in_t, clr) is
+machine_d_etat : process(etat_prochain, key_in_ok_t, ack_key_out, clr) is
 	
 	begin
 		
@@ -51,7 +67,8 @@ machine_d_etat : process(etat_prochain, Key_in_ok, ack_Key_out, round_in_t, clr)
 			etat <= "10";
 		--actif si validité de la clé en entrée ou si le tour courant n'est pas le premier
 		--permet de ne pas avoir besoin de clé valide tout le temps de l'opération, seulement au début
-		elsif (etat_prochain = actif) and ((Key_in_ok = '1') or (round_in_t /= 0)) then
+		--elsif (etat_prochain = actif) and ((key_in_ok = '1') or (round_in_t /= 0)) then
+		elsif (etat_prochain = actif) and (key_in_ok_t = '1') then
 			etat_courant <= actif;
 			etat <= "00";
 		--attente sur demande
@@ -59,7 +76,7 @@ machine_d_etat : process(etat_prochain, Key_in_ok, ack_Key_out, round_in_t, clr)
 			etat_courant <= attente;
 			etat <= "01";
 		--inactif sur acquittement des données de sortie
-		elsif (etat_prochain = inactif) and (ack_Key_out = '1') then
+		elsif (etat_prochain = inactif) and (ack_key_out = '1') then
 			etat_courant <= inactif;
 			etat <= "10";
 		end if;
@@ -79,9 +96,9 @@ key_expansion : process(horl, clr) is
 	
 	if (clr ='1') then
 		etat_prochain <= actif;
-		Key_out <= (others => '0');
-		Key_out_ok <= '0';
-		ack_Key_in <= '0';
+		key_out <= (others => '0');
+		key_out_ok <= '0';
+		ack_key_in <= '0';
 		
 	elsif rising_edge(horl) then
 		
@@ -90,14 +107,14 @@ key_expansion : process(horl, clr) is
 			--attente de données valables en entrée
 			--mise à zéro des sorties
 			when inactif =>
-				Key_out_ok <= '0';
-				Key_out <= (others => '0');
+				key_out_ok <= '0';
+				key_out <= (others => '0');
 				etat_prochain <= actif;
 			
 			--attendre la prise en compte du résultats de la part de l'unité suivante
 			--mise à zéro du signal d'acquittement
 			when attente =>
-				ack_Key_in <= '0';
+				ack_key_in <= '0';
 				etat_prochain <= inactif;
 			
 			--étape d'expansion de clé
@@ -105,10 +122,10 @@ key_expansion : process(horl, clr) is
 			
 			--première clé = clé en entrée
 			if (round_in_t = 0) then
-				Key_in_t := Key_in;
-				Key_out <= Key_in_t;
-				Key_out_ok <= '1';
-				ack_Key_in <= '1';
+				Key_in_t := key_in;
+				key_out <= Key_in_t;
+				key_out_ok <= '1';
+				ack_key_in <= '1';
 				etat_prochain <= attente;
 			
 			--création de la clé i+1 à partir de la clé i
@@ -119,7 +136,7 @@ key_expansion : process(horl, clr) is
 				column_t := Key_in_t(127 downto 96);
 				column_t := rot_word_fonc(column_t);
 				
-				ack_Key_in <= '1'; --acquittement
+				--ack_key_in <= '1'; --acquittement
 				
 				--sub_bytes sur la dernière colonne de l'état
 				substitute : for compteur in 0 to 3 loop
@@ -170,9 +187,9 @@ key_expansion : process(horl, clr) is
 					
 				end loop colonne_3;
 				
-				Key_out <= Key_out_t; --mise à jour de la sortie
+				key_out <= Key_out_t; --mise à jour de la sortie
 				Key_in_t := Key_out_t; --mise en mémoire du résultat
-				Key_out_ok <= '1';
+				key_out_ok <= '1';
 				etat_prochain <= attente;
 			
 			end if;
