@@ -49,10 +49,10 @@ process(key_in_ok, clr, round_in_t) is
 		
 		if(clr = '1') then
 			key_in_ok_t <= '0';
-		elsif rising_edge(key_in_ok) then
-			key_in_ok_t <= '1';			
 		elsif (round_in_t = 11) then
 			key_in_ok_t <= '0';
+		elsif rising_edge(key_in_ok) then
+			key_in_ok_t <= '1';			
 		end if;
 		
 end process;	
